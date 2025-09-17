@@ -10,6 +10,29 @@
 
 ## 📘 Next.js 수업 내용
 
+### 9월 17일 (4주차)
+- 중첩 라우트 만들기
+  - 폴더 구조: Next.js App Router에서 /blog 경로를 만들려면 app/blog 폴더를 생성하고 page.tsx 파일을 추가.
+  - page.tsx는 /blog URL로 접근할 때 보여줄 페이지.
+- [slug] 동적 라우트 개념
+  - /blog/[slug] 의 [slug]는 동적 세그먼트로, 데이터의 key(예: 글의 고유 식별자)를 의미.
+  - 데이터에 반드시 slug 필드가 있어야 해당 경로에서 사용 가능.
+  - /blog/nextjs 처럼 호출하면 slug 값이 nextjs로 전달됨.
+- [slug] 코드 설명
+  - export default async function Posts({ params }: { params: { slug: string } })
+    - async: 함수 내에서 await 사용 가능.
+    - params는 { slug: string } 형태의 객체로 전달.
+  - const { slug } = await params;
+    - params가 Promise일 수 있어 await로 실제 값을 꺼낸 뒤 구조 분해 할당.
+- searchParams(검색 매개변수)
+  - params vs searchParams
+    - params: URL path 중 동적 세그먼트(/blog/[slug]) 값.
+    - searchParams: ?key=value 형태의 쿼리스트링 값.
+  - 사용 시점
+    - 서버에서 데이터를 필터링해야 할 때 searchParams prop 사용.
+    - 클라이언트 단에서만 필터링 시 useSearchParams() 사용.
+    - 이벤트 핸들러에서 new URLSearchParams(window.location.search)로 직접 읽을 수도 있음.
+
 ### 9월 10일 (3주차)
 - 병결
 
