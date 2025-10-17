@@ -10,10 +10,57 @@
 
 ## 📘 Next.js 수업 내용
 
-### 10월 15일(7주차)
+### 10월 17일(7주차 보강)
+- my-likes 프로젝트 생성
+- Next.js Server & Client Component
+  - 기본 개념
+    - layout과 page는 기본적으로 Server Component
+    - Server Component는 서버에서 데이터를 가져와 UI를 렌더링
+      → 결과를 cache 후 client로 스트리밍 가능
+    - 브라우저 API나 상호작용이 필요한 경우엔 Client Component 사용
+      → 이벤트 처리, useEffect, 브라우저 API 등 포함
+  - 언제 사용해야 하나?
+    - Client Component 사용하는 경우
+      - state나 event handler 필요 (onClick, onChange)
+      - Lifecycle logic 필요 (useEffect)
+      - 브라우저 전용 API 사용 (localStorage, window, navigator.geolocation)
+      - 사용자 정의 Hook 사용 시
+    - Server Component 사용하는 경우
+      - 데이터 fetching (API 호출, DB 조회)
+      - 보안 데이터 처리 (API key 등 노출 방지)
+      - 브라우저 JS 전송 최소화로 성능 개선
+      - 초기 렌더링 속도 향상 (FCP 개선) — 콘텐츠를 스트리밍
+  - Pessimistic Update (비관적 업데이트)
+    - 이벤트 발생 시 서버 요청 → 응답 성공 후에 UI 업데이트
+    - 장점
+      - 데이터 일관성 유지
+      - 오류 발생 확률 낮음
+    - 단점
+      - 응답 대기 시간 길어짐 → UX 저하
+      - 네트워크 환경 나쁠 경우 느림
+  - Null 병합 연산자
+    - null 또는 undefined면 오른쪽 값 사용, 아니면 그대로 반환
+      → likes ?? 0 은 likes가 null/undefined일 때 0으로 대체
+    - ||와의 차이점: ||는 false, 0, "" 등 falsy 값도 오른쪽으로 대체
+  - Server Component의 작동
+    - Next.js가 React의 API로 렌더링 조정
+    - 렌더링은 라우팅 세그먼트별 청크 단위(layout, page)로 처리
+    - Server Component → **RSC Payload (압축된 바이너리 형태)**로 전송
+    - Client Component → HTML로 미리 렌더링 (pre-render)
+    - RSC Payload: 서버에서 렌더링된 React 트리를 직렬화한 데이터
+      → 클라이언트에서 DOM 업데이트 시 사용
+  - Client Component의 작동 (첫 로드)
+    - HTML은 미리 렌더링된 페이지를 즉시 보여줌
+    - RSC Payload는 서버·클라이언트 트리 조정
+    - JavaScript가 Hydration을 통해 HTML을 인터랙티브하게 만듦
+    - Hydration:
+      렌더된 HTML에 이벤트 핸들러를 연결해 인터랙티브한 페이지로 만드는 React 과정
+
+### 10월 15일(8주차)
 - 중간고사
 
 ### 10월 1일 (6주차)
+- 결석
 
 ### 9월 24일 (5주차)
 - 렌더링 방식 비교
@@ -93,7 +140,6 @@
         - App Router: app/layout.tsx, app/page.tsx
         - Turbopack
         - Import alias: tsconfig.json에 paths 생성
-
 - .eslintrc.json vs eslint.config.mjs
     - .eslintrc.json
         - JSON 형식 → 주석/변수/조건문 불가능
