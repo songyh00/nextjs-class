@@ -10,6 +10,92 @@
 
 ## 📘 Next.js 수업 내용
 
+### 10월 22일(9주차)
+- Server 및 Client Component Interleaving
+  - 개념
+    - Interleaving: 여러 데이터 블록을 섞어서 전송 → 오류 발생 시 영향을 최소화하는 기술.
+    - Next.js에서의 의미:
+      - Server Component와 Client Component가 섞여서(interleaved) 동작하는 구조.
+  - 작동 원리
+    1. Server Component가 서버에서 렌더링되어 HTML로 변환됨.
+    2. 이 HTML이 Client Component의 children 자리에 삽입됨.
+    3. 클라이언트에서는 Client Component만 hydration(JS 연결) 진행.
+    4. 서버 데이터는 이미 들어와 있으므로, 이벤트(버튼 클릭 등)는 클라이언트에서 처리.
+```
+// components/ServerContent.tsx
+export default async function ServerContent() {
+  const data = await fetch("https://jsonplaceholder.typicode.com/posts/1").then(r => r.json());
+  return <div>{data.title}</div>;
+}
+```
+```
+// app/interleaved/page.tsx
+import ClientLayout from "@/components/ClientLayout";
+import ServerContent from "@/components/ServerContent";
+
+export default function Page() {
+  return (
+    <ClientLayout>
+      <ServerContent />
+    </ClientLayout>
+  );
+}
+
+```
+- Context Provider (컨텍스트 제공자)
+  - Provider Component를 Server Component(Layout 등)에서 감싸면,
+앱 전체에서 모든 Client Component가 동일한 Context를 공유할 수 있음.
+  - Props 없이도 전역적으로 theme, 언어, 설정 등을 전달 가능.
+```
+// app/layout.tsx (Server Component)
+import ThemeProvider from './theme-provider';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
+    </html>
+  );
+}
+```
+```
+// theme-provider.tsx (Client Component)
+import { createContext, useState } from "react";
+
+export const ThemeContext = createContext({
+  theme: "light",
+  toggleTheme: () => {},
+});
+
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState("light");
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <html data-theme={theme}>{children}</html>
+    </ThemeContext.Provider>
+  );
+}
+```
+- CSS 적용 (Attribute Selector)
+  - html[data-theme='light'] → 속성 선택자(Attribute Selector)
+  - 클래스(.class) 대신 속성값을 기준으로 스타일 지정 가능.
+  - 여러 class를 중첩하지 않아도 되므로 스타일 충돌을 줄임.
+```
+html[data-theme='light'] {
+  background-color: white;
+  color: black;
+}
+
+html[data-theme='dark'] {
+  background-color: black;
+  color: white;
+}
+```
+
 ### 10월 17일(7주차 보강)
 - my-likes 프로젝트 생성
 - Next.js Server & Client Component
