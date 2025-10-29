@@ -10,6 +10,113 @@
 
 ## 📘 Next.js 수업 내용
 
+### 10월 29일(10주차)
+- Context Provider (컨텍스트 제공자)
+  - Props 없이도 전역 상태(theme, 언어 등)를 트리 전체에 공유.
+  - Provider를 Server Component에서 감싸면, Client Component들이 같은 Context 사용 가능.
+```
+// app/layout.tsx (Server Component)
+import ThemeProvider from './theme-provider';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
+```
+```
+// theme-provider.tsx (Client Component)
+"use client";
+import { createContext, useState, useEffect } from "react";
+
+export const ThemeContext = createContext({
+  theme: "light",
+  toggleTheme: () => {},
+});
+
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState("light");
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.documentElement.dataset.theme = theme;
+    }
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+```
+- CSS 적용 (Attribute Selector)
+  - html[data-theme='light'] 형태로 테마를 구분.
+  - 클래스(.class)보다 충돌 적고 전역 테마 관리에 적합.
+```
+html[data-theme='light'] {
+  background-color: white;
+  color: black;
+}
+
+html[data-theme='dark'] {
+  background-color: black;
+  color: white;
+}
+
+```
+- useEffect Hook 설명
+  - HTML 문서 전체에 theme를 적용하는 전형적인 패턴.
+  - typeof window !== 'undefined'
+    - 서버 사이드 렌더링(SSR) 환경에서는 window 객체가 없으므로,
+      이 조건을 넣어 클라이언트에서만 실행되도록 함.
+- Provider 구성 시 주의
+  - ThemeProvider는 <html> 대신 {children}만 감싸야 함.
+  - Provider는 트리에서 한 번만 사용 → 불필요한 렌더링 방지.
+  - 이렇게 하면 Server Component의 정적 부분을 더 쉽게 최적화 가능.
+- 환경 변수 노출 방지
+  - JS 모듈은 server와 client 간 공유될 수 있으므로 주의.
+  - 서버 전용 코드(process.env)는 client로 가져오면 안 됨.
+```
+// lib/data.ts
+export async function getData() {
+  const res = await fetch("https://external-service.com/data", {
+    headers: {
+      authorization: process.env.API_KEY,
+    },
+  });
+  return res.json();
+}
+
+```
+- 데이터 가져오기 (Fetching Data)
+  - 서버 컴포넌트에서 데이터 가져오는 방법
+    1. fetch API
+    2. ORM 또는 데이터베이스 직접 접근
+  - fetch 사용 시 컴포넌트를 비동기 함수로 선언해야 함.
+```
+// app/blog/page.tsx
+export default async function Page() {
+  const data = await fetch("https://api.vercel.app/blog");
+  const posts = await data.json();
+
+  return (
+    <ul>
+      {posts.map((post: any) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+
+```
 ### 10월 22일(9주차)
 - Server 및 Client Component Interleaving
   - 개념
