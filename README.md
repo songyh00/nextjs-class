@@ -10,6 +10,93 @@
 
 ## 📘 Next.js 수업 내용
 
+### 11월 05일(11주차)
+- 서버 컴포넌트에서 데이터 가져오기
+  - 서버 컴포넌트는 fetch() 함수를 이용해 데이터를 가져올 수 있다.
+    1. fetch API 직접 사용
+    2. ORM 또는 데이터베이스 사용
+```
+export default async function Page() {
+  const data = await fetch('https://api.vercel.app/blog');
+  const posts = await data.json();
+  return <div>{posts.map(p => <li key={p.id}>{p.title}</li>)}</div>;
+}
+
+```
+- Fetch 함수의 기본 이해
+  - fetch(url).then(res => res.json()) 형태로 자주 사용됨.
+  - 기본적으로 GET 요청을 수행.
+  - 반환값은 Promise<Response> 객체.
+  - 네트워크 요청이 성공하면 resolve, 실패하면 reject.
+  - 단, HTTP 오류(404, 500 등) 는 자동 reject되지 않음 → 직접 예외 처리 필요.
+```
+function getPosts() {
+  return fetch('https://jsonplaceholder.typicode.com/posts')
+    .then(res => res.json());
+}
+
+```
+- Promise 기본 개념
+  - new Promise()를 통해 비동기 작업을 처리.
+  - resolve: 성공 시 호출, reject: 실패 시 호출.
+```
+const promise = new Promise((resolve, reject) => {
+  if (성공) resolve('성공 결과');
+  else reject('에러 메시지');
+});
+
+```
+- Suspense Component
+  - 비동기 작업 중 UI 일부를 임시로 대체 UI(fallback)로 보여주는 React 기능.
+  - 데이터 로딩 중일 때 로딩 UI를 표시하고, 완료되면 실제 UI로 자동 전환.
+  - 여러 비동기 컴포넌트를 독립적으로 관리 가능.
+```
+import { Suspense } from 'react';
+
+<Suspense fallback={<div>Loading...</div>}>
+  <Posts />
+</Suspense>
+
+```
+- use Hook을 사용한 Fetch
+  - 서버에서 데이터를 클라이언트로 스트리밍하는 예제.
+  - fetch()에 await을 쓰지 말고 그대로 Promise로 넘겨야 함.
+```
+const posts = fetch('https://jsonplaceholder.typicode.com/posts');
+
+```
+- getPosts() 함수를 분리하는 방법
+  - 재사용성을 위해 src/lib/getPosts.ts 파일에 분리.
+```
+export async function getPosts(url: string) {
+  const res = await fetch(url);
+  const json = await res.json();
+  return json;
+}
+
+```
+- 제네릭(Generic) 타입 지정
+  - useSWR<T>에서 T 타입을 명시하면 데이터 구조가 명확해짐.
+  - Optional Chaining(?.)을 사용하여 undefined 안전하게 처리.
+  - 타입을 명시하면 data.post.id, data.post.title 등의 속성 자동 완성 가능.
+```
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+const { data, error, isLoading } = useSWR<{ id: string; title: string }[]>(
+  'https://jsonplaceholder.typicode.com/photos',
+  fetcher
+);
+
+```
+- 중복된 요청 제거 및 데이터 캐시
+  - Next.js의 데이터 캐시(Data Cache) 기능을 사용하면 동일한 fetch 요청이 여러 번 발생하는 것을 방지할 수 있다.
+  - fetch() 옵션에 cache: 'force-cache'를 설정하면, 이미 요청된 데이터를 재사용하여 불필요한 네트워크 호출을 줄인다.
+  - 이렇게 하면 렌더 패스(Render Pass) 간에도 동일한 데이터가 공유됨.
+```
+const posts = await fetch('https://example.com/posts', { cache: 'force-cache' });
+
+```
+
 ### 10월 29일(10주차)
 - Context Provider (컨텍스트 제공자)
   - Props 없이도 전역 상태(theme, 언어 등)를 트리 전체에 공유.
