@@ -10,6 +10,81 @@
 
 ## 📘 Next.js 수업 내용
 
+### 11월 12일(12주차)
+- 스트리밍 (Streaming)
+  - 개념 요약
+    - 스트리밍은 페이지의 HTML을 한 번에 렌더링하지 않고, 작은 블록 단위로 나누어 점진적으로 전송하는 방식입니다.
+      - 초기 로딩 속도를 개선하고, 사용자에게 더 빠르게 콘텐츠를 보여줄 수 있음.
+  - 전제 조건
+    - cacheComponents_config 옵션이 활성화되어 있다고 가정.
+    - Next.js 15 Canary 버전부터 지원.
+    - latest는 안정 버전, canary는 최신 개발 버전.
+  - 특징
+    - 서버 컴포넌트에서 async/await 사용 시 Next.js는 동적 렌더링(Server Rendering) 선택.
+    - 요청 시 서버에서 데이터를 가져와 렌더링.
+    - 데이터 응답이 느릴 경우 전체 렌더링이 지연될 수 있으므로 스트리밍이 유용함.
+  - 구현 방법
+    - 방법1 - loading.tsx 파일 사용
+      - 전체 페이지 로딩 중 상태를 보여줌.
+      - 예: app/blog/page.tsx를 스트리밍하려면 → app/blog/loading.tsx 파일 생성.
+        ```
+        export default function Loading() {
+          return <div>Loading...</div>
+        } 
+        ```
+    - 방법2 - <Suspense> 사용
+      - 페이지 일부만 스트리밍하고 싶을 때 사용.
+      - <Suspense>로 감싼 부분 외의 콘텐츠는 즉시 표시.
+      ```
+      import { Suspense } from 'react';
+      import BlogListSection from '@/components/BlogListSection';
+      
+      export default function BlogPage() {
+        return (
+          <Suspense fallback={<div>Loading posts...</div>}>
+            <BlogListSection />
+          </Suspense>
+        );
+      }
+      ```
+- 의미 있는 로딩 상태 (Instant Loading State)
+  - 개념
+    - 로딩 상태는 즉시(instant) 사용자에게 표시되는 대체 UI입니다.
+    - loading.tsx를 만들어 폴더 내 모든 하위 페이지에 적용 가능.
+  - 디자인 팁
+    - 사용자가 로딩 상태를 이해하기 쉽게 “의미 있는 로딩 상태”를 설계.
+      - 예) 스켈레톤(Skeleton), 스피너(Spinner)
+        - 단순 로딩 아이콘보다는 컨텐츠 형태를 암시하는 UI가 좋음.
+- 스켈레톤 vs 스피너
+  - 스켈레톤 (Skeleton)
+    - 실제 콘텐츠의 형태를 회색 블록 등으로 미리 보여주는 방식
+  - 스피너 (Spinner)
+    - 단순히 로딩 중임을 시각적으로 표시하는 회전 아이콘
+  - 스켈레톤이 사용자 경험 면에서 더 나은 경우가 많음 (예: 게시글 목록, 썸네일 등).
+- 데이터 Fetch 패턴
+  - 순차적 Fetch (Sequential Fetch)
+    - 트리 구조에서 상위 → 하위 순서로 데이터를 가져올 때 발생.
+    - Playlists가 Artist의 artistID를 알아야 해서 Artist 데이터를 다 받아야 Playlists fetch 시작 가능.
+    - 요청 간 의존성이 있음.
+  - 병렬 Fetch (Parallel Fetch)
+    - 경로 내 여러 데이터 요청이 동시에 발생.
+    - 기본적으로 레이아웃(Layout) 과 페이지(Page) 는 병렬로 렌더링됨.
+    - 한 컴포넌트 안의 여러 await 요청은 순서대로 처리될 수 있음.
+  ```
+  const [artist, albums] = await Promise.all([
+    getArtist(username),
+    getAlbums(username)
+  ]);
+  ```
+- 코드 구성 요약
+  - 필수 함수
+    - getArtist(username) → users 테이블에서 id, name 반환.
+    - getArtistPlaylists(artistID) → albums 테이블에서 {id, name} 배열 반환.
+  - 참고 사항
+    - page.tsx 내부에서 await 사용 가능 (Next.js 서버 환경).
+    - URL 세그먼트: /artist/[username]
+    - RootLayout, PageLayout 구성 필요.
+
 ### 11월 05일(11주차)
 - 서버 컴포넌트에서 데이터 가져오기
   - 서버 컴포넌트는 fetch() 함수를 이용해 데이터를 가져올 수 있다.
@@ -21,7 +96,6 @@ export default async function Page() {
   const posts = await data.json();
   return <div>{posts.map(p => <li key={p.id}>{p.title}</li>)}</div>;
 }
-
 ```
 - Fetch 함수의 기본 이해
   - fetch(url).then(res => res.json()) 형태로 자주 사용됨.
@@ -34,7 +108,6 @@ function getPosts() {
   return fetch('https://jsonplaceholder.typicode.com/posts')
     .then(res => res.json());
 }
-
 ```
 - Promise 기본 개념
   - new Promise()를 통해 비동기 작업을 처리.
@@ -44,7 +117,6 @@ const promise = new Promise((resolve, reject) => {
   if (성공) resolve('성공 결과');
   else reject('에러 메시지');
 });
-
 ```
 - Suspense Component
   - 비동기 작업 중 UI 일부를 임시로 대체 UI(fallback)로 보여주는 React 기능.
@@ -56,14 +128,12 @@ import { Suspense } from 'react';
 <Suspense fallback={<div>Loading...</div>}>
   <Posts />
 </Suspense>
-
 ```
 - use Hook을 사용한 Fetch
   - 서버에서 데이터를 클라이언트로 스트리밍하는 예제.
   - fetch()에 await을 쓰지 말고 그대로 Promise로 넘겨야 함.
 ```
 const posts = fetch('https://jsonplaceholder.typicode.com/posts');
-
 ```
 - getPosts() 함수를 분리하는 방법
   - 재사용성을 위해 src/lib/getPosts.ts 파일에 분리.
@@ -73,7 +143,6 @@ export async function getPosts(url: string) {
   const json = await res.json();
   return json;
 }
-
 ```
 - 제네릭(Generic) 타입 지정
   - useSWR<T>에서 T 타입을 명시하면 데이터 구조가 명확해짐.
@@ -86,7 +155,6 @@ const { data, error, isLoading } = useSWR<{ id: string; title: string }[]>(
   'https://jsonplaceholder.typicode.com/photos',
   fetcher
 );
-
 ```
 - 중복된 요청 제거 및 데이터 캐시
   - Next.js의 데이터 캐시(Data Cache) 기능을 사용하면 동일한 fetch 요청이 여러 번 발생하는 것을 방지할 수 있다.
@@ -94,7 +162,6 @@ const { data, error, isLoading } = useSWR<{ id: string; title: string }[]>(
   - 이렇게 하면 렌더 패스(Render Pass) 간에도 동일한 데이터가 공유됨.
 ```
 const posts = await fetch('https://example.com/posts', { cache: 'force-cache' });
-
 ```
 
 ### 10월 29일(10주차)
@@ -114,7 +181,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
 ```
 ```
 // theme-provider.tsx (Client Component)
@@ -142,7 +208,6 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     </ThemeContext.Provider>
   );
 }
-
 ```
 - CSS 적용 (Attribute Selector)
   - html[data-theme='light'] 형태로 테마를 구분.
@@ -157,7 +222,6 @@ html[data-theme='dark'] {
   background-color: black;
   color: white;
 }
-
 ```
 - useEffect Hook 설명
   - HTML 문서 전체에 theme를 적용하는 전형적인 패턴.
@@ -181,7 +245,6 @@ export async function getData() {
   });
   return res.json();
 }
-
 ```
 - 데이터 가져오기 (Fetching Data)
   - 서버 컴포넌트에서 데이터 가져오는 방법
@@ -202,7 +265,6 @@ export default async function Page() {
     </ul>
   );
 }
-
 ```
 ### 10월 22일(9주차)
 - Server 및 Client Component Interleaving
@@ -234,7 +296,6 @@ export default function Page() {
     </ClientLayout>
   );
 }
-
 ```
 - Context Provider (컨텍스트 제공자)
   - Provider Component를 Server Component(Layout 등)에서 감싸면,
